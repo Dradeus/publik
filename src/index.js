@@ -1,4 +1,5 @@
-import React, { Component } from 'react'
+import { BrowserRouter } from 'react-router-dom';
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 
 import App from './components/App.jsx';
@@ -7,4 +8,8 @@ import App from './components/App.jsx';
 import bootstrap from 'bootstrap/dist/css/bootstrap.css';
 import style from './styles/style.css';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render((
+	<BrowserRouter>
+		<App />
+	</BrowserRouter>
+), document.getElementById('root'));

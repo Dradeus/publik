@@ -54,29 +54,42 @@ export default class Profile extends Component {
                       : 'Nameless Person' }</span>
                   </h1>
                   <span>{username}</span>
-                  <span>
-                    &nbsp;|&nbsp;
-                    <a onClick={ handleSignOut.bind(this) }>(Logout)</a>
-                  </span>
+                  {this.isLocal() &&
+                    <span>
+                      &nbsp;|&nbsp;
+                      <a onClick={ handleSignOut.bind(this) }>(Logout)</a>
+                    </span>
+                  }
                 </div>
               </div>
             </div>
-            <div className="new-status">
-              <div className="col-md-12">
-                <textarea className="input-status"
-                  value={this.state.newStatus}
-                  onChange={e => this.handleNewStatusChange(e)}
-                  placeholder="What's on your mind?"
-                />
+            {this.isLocal() &&
+              <div className="new-status">
+                <div className="col-md-12">
+                  <textarea className="input-status"
+                    value={this.state.newStatus}
+                    onChange={e => this.handleNewStatusChange(e)}
+                    placeholder="What's on your mind?"
+                  />
+                </div>
+                <div className="col-md-12">
+                  <button
+                    className="btn btn-primary btn-lg"
+                    onClick={e => this.handleNewStatusSubmit(e)}
+                  >
+                    Submit
+                  </button>
+                </div>
               </div>
-              <div className="col-md-12">
-                <button
-                  className="btn btn-primary btn-lg"
-                  onClick={e => this.handleNewStatusSubmit(e)}
-                >
-                  Submit
-                </button>
-              </div>
+            }
+            <div className="col-md-12 statuses">
+              {this.state.isLoading && <span>Loading...</span>}
+              {this.state.statuses.map((status) => (
+                  <div className="status" key={status.id}>
+                    {status.text}
+                  </div>
+                )
+              )}
             </div>
           </div>
         </div>
@@ -89,6 +102,44 @@ export default class Profile extends Component {
       person: new Person(loadUserData().profile),
       username: loadUserData().username
     });
+  }
+
+  componentDidMount() {
+    this.fetchData();
+  }
+
+  fetchData() {
+    this.setState({ isLoading: true })
+    if (this.isLocal()) {
+      const options = { decrypt: false };
+      getFile('statuses.json', options)
+      .then((file) => {
+        var statuses = JSON.parse(file || '[]');
+        this.setState({
+          person: new Person(loadUserData().profile),
+          username: loadUserData().username,
+          statusIndex: statuses.length,
+          statuses: statuses,
+        })
+      })
+      .finally(() => {
+        this.setState({ isLoading: false })
+      })
+    } else {
+      const username = this.props.match.params.username;
+
+      lookupProfile(username)
+        .then((profile) => {
+          this.setState({
+            person: new Person(profile),
+            username: username
+          })
+        })
+        .catch((error) => {
+          console.log('could not resolve profile')
+        })
+    }
+    
   }
 
   handleNewStatusChange(event) {
@@ -119,5 +170,9 @@ export default class Profile extends Component {
           statuses: statuses
         });
       });
+  }
+
+  isLocal() {
+    return this.props.match.params.username ? false : true
   }
 }
